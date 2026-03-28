@@ -3,6 +3,7 @@ import torch
 
 _MEAN = 0.2860
 _STD = 0.3530
+
 def get_train_transform():
     return transforms.Compose([
         transforms.ToTensor(),
@@ -23,6 +24,12 @@ def get_rotate_transform(degrees):
         transforms.Normalize((_MEAN,), (_STD))
     ])
 
+def get_random_rotate_transform():
+    return transforms.Compose([
+        transforms.RandomRotation(degrees=(0, 360)),  # random rotation every epoch
+        transforms.ToTensor(),
+        transforms.Normalize((_MEAN ,), (_STD,))
+    ])
 def get_blur_transform(kernel_size):
     """Gaussian blur with given kernel size (must be odd)."""
     return transforms.Compose([

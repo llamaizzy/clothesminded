@@ -17,7 +17,7 @@ def evaluate(model, dataloader, device):
     all_preds = []
     all_labels = []
     with torch.no_grad():
-        for x, y, in dataloader:
+        for x, y in dataloader:
             x, y = x.to(device), y.to(device)
             preds = model(x).argmax(dim=1) # gets predicted class via highest score
             all_preds.extend(preds.cpu().numpy())
