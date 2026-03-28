@@ -8,42 +8,66 @@ and using the predicted angle to rotate the image back into its original orienta
 into the classifier
 """
 from sklearn.neural_network import MLPRegressor
+from sklearn.metrics import mean_squared_error
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import pandas as pd
-from src.model.models import RotationRegressor, load_model, save_model
-from src.model.train import train
+import joblib
+import numpy as np
+from src.model.models import load_model
 from src.evaluate import evaluate
-from src.data.load_data import load_rotated_data
-from src.data.transforms import get_random_rotate_transform
-import plotly.express as px
+from src.data.load_data import load_unrotated_data
+from plotting import visualize_pred_true_angles, visualize_unrotation
 
 device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
 
-train_new_model = True
-model_path = "checkpoints/rotation_correction_model.pth"
-model = load_model(device, RotationRegressor, path=None if train_new_model else model_path)
+regressor_path = "checkpoints/rotation_correction_model.pth"
+train_new_reg = False
 
-rotated_train_loader = load_rotated_data(train=True, target="labels")
-rotated_test_loader = load_rotated_data(train=False, target="labels")
+# -------- load data ------------
+train_data = torch.load("experiments/data/rotated_train_set.pt")
+X_train = train_data["images"].numpy().reshape(-1, 784)
+y_train = train_data["angles"].numpy()
 
-train_reg_loader = load_rotated_data(train=True, target="angles")
-test_reg_loader = load_rotated_data(train=False, target="angles")
+test_data = torch.load("experiments/data/rotated_test_set.pt")
+X_test = test_data["images"].numpy().reshape(-1, 784)
+y_test = test_data["angles"].numpy()
+test_images = test_data["images"]
+test_labels = test_data["labels"]
 
-# Train regression
-if train_new_model:
-    opt = optim.Adam(model.parameters(), lr=1e-3)
-    loss_fn = nn.MSELoss()
-    for epoch in range(5):
-        loss = train(model, train_reg_loader, opt, loss_fn, device)
-        print(f"Epoch {epoch+1} - Loss: {loss:.4f}")
-    save_model(model, "checkpoints/rotation_correction_model.pth")
+# -------- train or load regression model --------
+if train_new_reg:
+    regressor = MLPRegressor(
+        hidden_layer_sizes=(256, 128),
+        activation='relu',
+        max_iter=100,
+        random_state=42,
+        early_stopping=True,
+        verbose=True
+    )
+    regressor.fit(X_train, y_train)
+    joblib.dump(regressor, regressor_path)
+else:
+    regressor = joblib.load(regressor_path)
 
-# Evaluate regression model
-pred_angles, _ , accuracy, conf_matrix = evaluate(model, test_reg_loader, device)
-print(f"Regression Test Accuracy: {accuracy:.4f}")
+# ---------- evaluate regressor ---------
+y_pred_angles = regressor.predict(X_test)
+mse = mean_squared_error(y_test, y_pred_angles)
+rmse = np.sqrt(mse)
+print(f"Test MSE: {mse:.2f}")
+print(f"Test RMSE: {rmse:.2f}")
 
-# Make new predictions using the original classifier model and check accuracy of images classified
-model = load_model(device, path="checkpoints/baseline_model.pth")
+# Show some predictions
+print("\nSample predictions:")
+for i in range(5):
+    print(f"True rotation: {y_test[i]:.1f}°, Predicted: {y_pred_angles[i]:.1f}°")
 
+# visualize relationship predicted vs true rotation angle
+visualize_pred_true_angles(y_test, y_pred_angles)
+
+# show unrotated vs original image
+visualize_unrotation(test_images, true_angles=y_test, pred_angles=y_pred_angles, idx=0)
+
+# ---------- unrotate and classify -------
+classifier = load_model(device, path="checkpoints/baseline_model.pth")
+unrotated_loader = load_unrotated_data(test_images, test_labels, y_pred_angles)
+_, _, final_accuracy, conf_matrix = evaluate(classifier, unrotated_loader, device)
+print(f"Test Accuracy after rotation correction: {final_accuracy:.4f}")

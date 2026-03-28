@@ -24,30 +24,8 @@ class CNN(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-class RotationRegressor(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Conv2d(1, 32, 3),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Conv2d(32, 64, 3),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Flatten(),
-            nn.Linear(1600, 128),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, 1)      # single output: predicted angle
-        )
-
-    def forward(self, x):
-        return self.net(x).squeeze(1)  # shape (batch,)
-    
-def load_model(device, type, path=None):
-    model = type().to(device)
+def load_model(device, path=None):
+    model = CNN().to(device)
 
     if path is not None:
         model.load_state_dict(torch.load(path, map_location=device))

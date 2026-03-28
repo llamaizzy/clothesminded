@@ -57,5 +57,15 @@ def load_rotated_data(train: bool = True,
     dataset = TensorDataset(images, y)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
-class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+def load_unrotated_data(images, labels, angles, batch_size: int = 64):
+    """
+    Predict angles with regressor, and unrotate images.
+    """
+    normalize = transforms.Normalize((_MEAN,), (_STD,))
+    corrected_images = torch.stack([
+        normalize(transforms.functional.rotate(img, -float(angle)))
+        for img, angle in zip(images, angles)
+    ])
+    dataset = TensorDataset(corrected_images, labels)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    

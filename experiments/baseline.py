@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
-from src.model.models import CNN, load_model, save_model
+from src.model.models import load_model, save_model
 from src.model.train import train
 from src.evaluate import evaluate, evaluate_augmented
 from src.data.load_data import get_dataloaders
@@ -11,9 +11,9 @@ import plotly.express as px
 
 device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
 
-train_new_model = False
+train_new_model = True
 model_path = "checkpoints/baseline_model.pth"
-model = load_model(device, CNN, path=None if train_new_model else model_path)
+model = load_model(device, path=None if train_new_model else model_path)
 
 train_loader, test_loader = get_dataloaders(
     get_train_transform(), get_clean_test_transform()
@@ -22,10 +22,10 @@ train_loader, test_loader = get_dataloaders(
 if train_new_model:
     opt = optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.CrossEntropyLoss()
-    for epoch in range(20):
+    for epoch in range(5):
         loss = train(model, train_loader, opt, loss_fn, device)
         print(f"Epoch {epoch+1} - Loss: {loss:.4f}")
-    save_model(model, "checkpoints/model.pth")
+    save_model(model, model_path)
     aug_data = []
     distortion_configs = [
         ("rotation", [45, 90, 200]),
@@ -47,8 +47,10 @@ if train_new_model:
     print(aug_performance)
     aug_performance.to_csv("experiments/distortion_results.csv")
 
-_, _, accuracy, conf_matrix = evaluate(model, test_loader, device)
-print(f"Baseline Test Accuracy: {accuracy:.4f}")
+_, _, train_accuracy, _ = evaluate(model, train_loader, device)
+_, _, test_accuracy, _ = evaluate(model, test_loader, device)
+print(f"Baseline Train Accuracy: {train_accuracy:.4f}")
+print(f"Baseline Test Accuracy: {test_accuracy:.4f}")
 
 # Evaluate classifer on augmented test data
 aug_performance = pd.read_csv("experiments/distortion_results.csv")

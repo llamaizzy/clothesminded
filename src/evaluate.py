@@ -15,18 +15,18 @@ from src.data.transforms import (
 def evaluate(model, dataloader, device):
     model.eval()
     all_preds = []
-    all_labels = []
+    all_true = []
     with torch.no_grad():
         for x, y in dataloader:
             x, y = x.to(device), y.to(device)
             preds = model(x).argmax(dim=1) # gets predicted class via highest score
             all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(y.cpu().numpy())
+            all_true.extend(y.cpu().numpy())
 
-    accuracy = accuracy_score(all_labels, all_preds)
-    conf_matrix = confusion_matrix(all_labels, all_preds)
+    accuracy = accuracy_score(all_true, all_preds)
+    conf_matrix = confusion_matrix(all_true, all_preds)
 
-    return all_preds, all_labels, accuracy, conf_matrix
+    return all_preds, all_true, accuracy, conf_matrix
 
 # evaluate on augmented test set
 def evaluate_augmented(model, device, distortion, severity_list, batch_size=64):
