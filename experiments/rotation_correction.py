@@ -7,6 +7,11 @@ Undo rotations in test set by building a regression model to predict rotation an
 and using the predicted angle to rotate the image back into its original orientation before feeding it
 into the classifier
 """
+
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
 import torch
