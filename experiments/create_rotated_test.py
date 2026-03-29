@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torchvision.datasets import FashionMNIST
-from torchvision import transforms
+from src.data.transforms import get_clean_transform
 import torchvision.transforms.functional as TF
 
 SEED = 42
@@ -10,7 +10,7 @@ SAVE_PATH = "experiments/data/rotated_test_set.pt"
 def create_rotated_dataset(save_path: str = SAVE_PATH, train: bool = True):
     # load raw test set without any transform
     dataset = FashionMNIST(root='./data', train=train, download=True,
-                                 transform=transforms.ToTensor())
+                                 transform=get_clean_transform())
 
     torch.manual_seed(SEED)
     np.random.seed(SEED)

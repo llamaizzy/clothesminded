@@ -5,7 +5,7 @@
 Align training distribution with test distribution.
 Generate augmented training data so our model is more robust to variations in orientation
 """
-
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,8 +22,8 @@ train_new_model = False
 model_path = "checkpoints/rotation_invariant_model.pth"
 model = load_model(device, path=None if train_new_model else model_path)
 
-rotated_train_loader = load_rotated_data(train=True, target="labels")
-rotated_test_loader = load_rotated_data(train=False, target="labels")
+rotated_train_loader = load_rotated_data(train=True)
+rotated_test_loader = load_rotated_data(train=False)
 
 # Train
 if train_new_model:
@@ -35,5 +35,12 @@ if train_new_model:
     save_model(model, "checkpoints/rotation_invariant_model.pth")
 
 # Evaluate
-preds, true_labels, accuracy, conf_matrix = evaluate(model, rotated_train_loader, device)
+accuracy, _, _, _ = evaluate(model, rotated_train_loader, device)
 print(f"Test Accuracy: {accuracy:.4f}")
+
+# Save accuracy to json
+results = {"accuracy": round(accuracy, 4)}
+
+with open("experiments/results/invariant_results.json", "w") as f:
+    json.dump(results, f, indent=4)
+print("Results saved to experiments/results/invariant_results.json")

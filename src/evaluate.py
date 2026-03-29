@@ -3,7 +3,7 @@ from src.data.load_data import get_dataloaders
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from src.data.transforms import (
-    get_train_transform,
+    get_clean_transform,
     get_rotate_transform,
     get_blur_transform,
     get_shift_transform,
@@ -26,7 +26,7 @@ def evaluate(model, dataloader, device):
     accuracy = accuracy_score(all_true, all_preds)
     conf_matrix = confusion_matrix(all_true, all_preds)
 
-    return all_preds, all_true, accuracy, conf_matrix
+    return accuracy, all_preds, all_true, conf_matrix
 
 # evaluate on augmented test set
 def evaluate_augmented(model, device, distortion, severity_list, batch_size=64):
@@ -57,7 +57,7 @@ def evaluate_augmented(model, device, distortion, severity_list, batch_size=64):
             raise ValueError(f"Unknown distortion: '{distortion}'. Choose rotate, blur, shift, rotate_blur, or shift_rotate_blur")
 
         _, test_loader = get_dataloaders(
-            train_transform=get_train_transform(),
+            train_transform=get_clean_transform(),
             test_transform=test_transform,
             batch_size=batch_size
         )

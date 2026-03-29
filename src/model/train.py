@@ -1,5 +1,3 @@
-import torch
-
 def train(model, dataloader, optimizer, loss_fn, device):
     model.train()
     total_loss = 0

@@ -7,11 +7,7 @@ Undo rotations in test set by building a regression model to predict rotation an
 and using the predicted angle to rotate the image back into its original orientation before feeding it
 into the classifier
 """
-
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+import json
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
 import torch
@@ -24,7 +20,7 @@ from plotting import visualize_pred_true_angles, visualize_unrotation
 
 device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
 
-regressor_path = "checkpoints/rotation_correction_model.pth"
+regressor_path = "checkpoints/rotation_regression_model.joblib"
 train_new_reg = False
 
 # -------- load data ------------
@@ -41,13 +37,14 @@ test_labels = test_data["labels"]
 # -------- train or load regression model --------
 if train_new_reg:
     regressor = MLPRegressor(
-        hidden_layer_sizes=(256, 128),
-        activation='relu',
-        max_iter=100,
-        random_state=42,
-        early_stopping=True,
-        verbose=True
-    )
+      hidden_layer_sizes=(256, 128),
+      activation='relu',
+      solver='adam',
+      max_iter=100,
+      random_state=42,
+      early_stopping=True,
+      verbose=True
+  )
     regressor.fit(X_train, y_train)
     joblib.dump(regressor, regressor_path)
 else:
@@ -74,5 +71,12 @@ visualize_unrotation(test_images, true_angles=y_test, pred_angles=y_pred_angles,
 # ---------- unrotate and classify -------
 classifier = load_model(device, path="checkpoints/baseline_model.pth")
 unrotated_loader = load_unrotated_data(test_images, test_labels, y_pred_angles)
-_, _, final_accuracy, conf_matrix = evaluate(classifier, unrotated_loader, device)
-print(f"Test Accuracy after rotation correction: {final_accuracy:.4f}")
+accuracy, _, _, _ = evaluate(classifier, unrotated_loader, device)
+print(f"Test Accuracy after rotation correction: {accuracy:.4f}")
+
+# Save accuracy to json
+results = {"accuracy": round(accuracy,4)}
+
+with open("experiments/results/correction_results.json", "w") as f:
+    json.dump(results, f, indent=4)
+print("Results saved to experiments/results/correction_results.json")

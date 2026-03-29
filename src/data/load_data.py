@@ -39,33 +39,23 @@ def get_test_loader(test_transform, batch_size=64):
     )
     return DataLoader(test_dataset, batch_size=batch_size)
 
-def load_rotated_data(train: bool = True,
-                         target: str = "labels",
-                         batch_size: int = 64,
-                         shuffle: bool = False):
-    
+def load_rotated_data(train: bool = True, batch_size: int = 64, shuffle: bool = False):
     path = ("experiments/data/rotated_train_set.pt" if train 
             else "experiments/data/rotated_test_set.pt")
     
     data = torch.load(path)
     images = data["images"]
-    y = data[target].float() if target == "angles" else data[target]
-
-    normalize = transforms.Normalize((_MEAN,), (_STD,))
-    images = torch.stack([normalize(img) for img in images])
-
-    dataset = TensorDataset(images, y)
+    labels = data["labels"]
+    dataset = TensorDataset(images, labels)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 def load_unrotated_data(images, labels, angles, batch_size: int = 64):
     """
     Predict angles with regressor, and unrotate images.
     """
-    normalize = transforms.Normalize((_MEAN,), (_STD,))
     corrected_images = torch.stack([
-        normalize(transforms.functional.rotate(img, -float(angle)))
-        for img, angle in zip(images, angles)
-    ])
+        transforms.functional.rotate(img, -float(angle))
+        for img, angle in zip(images, angles)])
     dataset = TensorDataset(corrected_images, labels)
     return DataLoader(dataset, batch_size=batch_size, shuffle=False)
     
