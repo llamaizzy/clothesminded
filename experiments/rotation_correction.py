@@ -71,7 +71,7 @@ visualize_unrotation(test_images, true_angles=y_test, pred_angles=y_pred_angles,
 # ---------- unrotate and classify -------
 classifier = load_model(device, path="checkpoints/baseline_model.pth")
 unrotated_loader = load_unrotated_data(test_images, test_labels, y_pred_angles)
-accuracy, _, _, _ = evaluate(classifier, unrotated_loader, device)
+accuracy, _, _ = evaluate(classifier, unrotated_loader, device)
 print(f"Test Accuracy after rotation correction: {accuracy:.4f}")
 
 # Save accuracy to json

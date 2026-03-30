@@ -25,14 +25,16 @@ train_loader, test_loader = get_dataloaders(
     get_clean_transform(), get_clean_transform()
 )
 
-# Train classifier and create augmented results dataset
 if train_new_model:
+    # Train classifier 
     opt = optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.CrossEntropyLoss()
     for epoch in range(20):
         loss = train(model, train_loader, opt, loss_fn, device)
         print(f"Epoch {epoch+1} - Loss: {loss:.4f}")
     save_model(model, model_path)
+
+    # Test on different distortions + create augmented results dataset
     aug_data = []
     distortion_configs = [
         ("rotation", [45, 90, 200]),
@@ -42,7 +44,7 @@ if train_new_model:
         ("shift_rotate_blur", [((5, 0), 45, 3), ((-5, 0), 90, 5)])
     ]
     for distortion, severities in distortion_configs:
-        results, _ = evaluate_augmented(model, device, distortion, severities)
+        results = evaluate_augmented(model, device, distortion, severities)
         for severity, accuracy in results.items():
             aug_data.append({
                 "augmentation": f"{distortion}_{severity}",
@@ -51,18 +53,18 @@ if train_new_model:
                 "severity": severity,
             })
     aug_performance = pd.DataFrame(aug_data)
-    print(aug_performance)
-    aug_performance.to_csv("experiments/distortion_results.csv")
+    aug_performance.to_csv("experiments/distortion_results.csv", index=False)
 
 # Evaluate classifier on normal test data
-train_accuracy, _, _, _ = evaluate(model, train_loader, device)
-baseline_normal_accuracy, _, _, _= evaluate(model, test_loader, device)
+train_accuracy, _, _ = evaluate(model, train_loader, device)
+baseline_normal_accuracy, _, _ = evaluate(model, test_loader, device)
 print(f"Baseline Train Accuracy: {train_accuracy:.4f}")
 print(f"Baseline Test Accuracy: {baseline_normal_accuracy:.4f}")
 
 # Evaluate classifer on (manually) augmented test data
 if os.path.exists("experiments/distortion_results.csv"):
-    aug_performance = pd.read_csv(aug_fig_path)
+    aug_performance = pd.read_csv("experiments/distortion_results.csv")
+    print(aug_performance)
     sorted_df = aug_performance.sort_values('accuracy', ascending=False)
     fig = px.bar(sorted_df, 
                 x='augmentation', 
@@ -74,7 +76,7 @@ if os.path.exists("experiments/distortion_results.csv"):
 
 # Evaluate classifier on rotated test data
 rotated_data = load_rotated_data(train=False)
-baseline_rotated_accuracy, _, _, _ = evaluate(model, rotated_data, device)
+baseline_rotated_accuracy, _, _ = evaluate(model, rotated_data, device)
 print(f"Baseline accuracy on rotated test: {baseline_rotated_accuracy:.4f}")
 
 # Save accuracy to json

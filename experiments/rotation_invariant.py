@@ -35,7 +35,7 @@ if train_new_model:
     save_model(model, "checkpoints/rotation_invariant_model.pth")
 
 # Evaluate
-accuracy, _, _, _ = evaluate(model, rotated_train_loader, device)
+accuracy, _, _ = evaluate(model, rotated_test_loader, device)
 print(f"Test Accuracy: {accuracy:.4f}")
 
 # Save accuracy to json

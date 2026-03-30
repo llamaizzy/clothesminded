@@ -1,1 +1,11 @@
+**Blur vs rotation**: 
 From the distribution comparison image, we see that blur and shift performs the best while anything with rotation performs worse. This is likely because our model was trained on normal, upright images so any rotational/spatial orientation changes will be hard to perform well on. Also, rotating can introduce distortions/cropping, causing us to lose information and making the model perform worse.
+
+**Broader findings from solutions**:
+- Regressor RMSE of ~49 degrees is the bottleneck for solution 2 and 3
+- Simple TTA actually hurts with 0-360 rotations since fixed angles don't cover the full rotation space
+- CNN-based regressor would be the most impactful next step --> would improve both solutions 2 and 3 simultaneously
+
+**Next steps**: 
+- Replace MLPRegressor with CNN-based angle predictor
+- Test on larger, more complex datasets where rotation invariance is harder to learn

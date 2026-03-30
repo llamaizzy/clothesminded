@@ -23,22 +23,6 @@ def get_dataloaders(train_transform, test_transform, batch_size=64):
 
     return train_loader, test_loader
 
-# for rotation invariant's convenience
-def get_train_loader(train_transform, batch_size=64):
-    train_dataset = FashionMNIST(
-        root='./data', train=True, download=True,
-        transform=train_transform
-    )
-    return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
-# for rotation invariant's convenience
-def get_test_loader(test_transform, batch_size=64):
-    test_dataset = FashionMNIST(
-        root='./data', train=False, download=True,
-        transform=test_transform
-    )
-    return DataLoader(test_dataset, batch_size=batch_size)
-
 def load_rotated_data(train: bool = True, batch_size: int = 64, shuffle: bool = False):
     path = ("experiments/data/rotated_train_set.pt" if train 
             else "experiments/data/rotated_test_set.pt")

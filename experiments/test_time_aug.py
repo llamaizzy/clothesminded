@@ -21,9 +21,9 @@ test_data = torch.load("experiments/data/rotated_test_set.pt")
 angles = [0, -15, 15, 45, -45, 90, -90]
 def evaluate_tta(model, dataloader, device, angles=angles):
     """
-    Simple TTA: Rotate each image by fixed angles, average softmax 
-    probabilities across all rotations, and take argmax as final prediction.
-    No retraining required — purely an inference-time strategy.
+    Simple TTA: Rotate each image by fixed angles, get softmax 
+    probabilities across all rotations for each image, sum them up, and 
+    take argmax as final prediction (highest scoring class).
     """
     model.eval()
     all_preds, all_labels = [], []
